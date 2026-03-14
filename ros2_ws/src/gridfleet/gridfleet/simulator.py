@@ -1,7 +1,6 @@
 from __future__ import annotations
-
 from .grid_map import GridMap
-from .models import Position, Robot
+from .models import Robot  # Position,
 
 
 class Simulator:
@@ -9,7 +8,6 @@ class Simulator:
         self.grid = grid
         self.robots = robots
         self.step_count = 0
-
 
     def render_ascii(self) -> str:
         cells = [["." for _ in range(self.grid.width)] for _ in range(self.grid.height)]
@@ -27,32 +25,13 @@ class Simulator:
 
         return "\n".join(" ".join(row) for row in cells)
 
-
     def all_robots_at_goal(self) -> bool:
         return all(robot.position == robot.goal for robot in self.robots)
 
-
     def step_demo(self) -> None:
-        """
-        Temporary fake movement logic for milestone 1.
-        Each robot greedily tries to move one step toward its goal.
-        This is NOT MAPF yet.
-        """
         for robot in self.robots:
-            dx = 0
-            dy = 0
+            if len(robot.path) > 1:
+                robot.path.pop(0)
+                robot.position = robot.path[0]
 
-            if robot.position.x < robot.goal.x:
-                dx = 1
-            elif robot.position.x > robot.goal.x:
-                dx = -1
-            elif robot.position.y < robot.goal.y:
-                dy = 1
-            elif robot.position.y > robot.goal.y:
-                dy = -1
-
-            next_pos = Position(robot.position.x + dx, robot.position.y + dy)
-
-            if self.grid.is_free(next_pos):
-                robot.position = next_pos
         self.step_count += 1

@@ -1,8 +1,6 @@
 from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Iterable
-
 from .models import Position
 
 
@@ -12,7 +10,9 @@ class GridMap:
     height: int
     obstacles: set[Position]
 
-    def __init__(self, width: int, height: int, obstacles: Iterable[Position] | None = None) -> None:
+    def __init__(self, width: int,
+                 height: int,
+                 obstacles: Iterable[Position] | None = None) -> None:
         self.width = width
         self.height = height
         self.obstacles = set(obstacles or [])
@@ -25,3 +25,12 @@ class GridMap:
 
     def is_free(self, pos: Position) -> bool:
         return self.in_bounds(pos) and not self.is_blocked(pos)
+
+    def neighbors(self, pos: Position) -> list[Position]:
+        candidates = [
+            Position(pos.x + 1, pos.y),
+            Position(pos.x - 1, pos.y),
+            Position(pos.x, pos.y + 1),
+            Position(pos.x, pos.y - 1),
+        ]
+        return [candidate for candidate in candidates if self.is_free(candidate)]

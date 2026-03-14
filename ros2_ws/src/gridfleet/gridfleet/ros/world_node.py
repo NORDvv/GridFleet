@@ -3,7 +3,8 @@ from __future__ import annotations
 import rclpy
 from rclpy.node import Node
 
-from ..scenarios import basic_scenario
+from ..planner import bfs_plan
+from ..scenarios import bfs_demo_scenario  # basic_scenario,
 from ..simulator import Simulator
 
 
@@ -17,12 +18,20 @@ class WorldNode(Node):
         tick_seconds = float(self.get_parameter("tick_seconds").value)
         self.max_steps = int(self.get_parameter("max_steps").value)
 
-        grid, robots = basic_scenario()
+        # grid, robots = basic_scenario()
+        grid, robots = bfs_demo_scenario()
         self.sim = Simulator(grid, robots)
 
-        self.get_logger().info("GridFleet world node started.")
+        robot = self.sim.robots[0]
+        robot.path = bfs_plan(self.sim.grid, robot.position, robot.goal)
+
+        if not robot.path:
+            self.get_logger().error(f"No path found for {robot.robot_id}.")
+            raise RuntimeError("Planner failed to find a path.")
+
+        self.get_logger().info("GridFleet Phase 2 world node started.")
+        self.get_logger().info(f"Planned path for {robot.robot_id}: {robot.path}")
         self.get_logger().info(
-            f"Running simulation with {len(self.sim.robots)} robots, "
             f"tick_seconds={tick_seconds}, max_steps={self.max_steps}"
         )
 
