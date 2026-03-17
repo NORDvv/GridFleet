@@ -22,6 +22,22 @@ def basic_scenario() -> tuple[GridMap, list[Robot]]:
     return grid, robots
 
 
+def conflict_demo_scenario() -> tuple[GridMap, list[Robot]]:
+    grid = GridMap(
+        width=8,
+        height=8,
+        obstacles=set(),
+    )
+
+    robots = [
+        Robot("R1", Position(1, 3), Position(6, 3)),
+        Robot("R2", Position(6, 3), Position(1, 3)),
+        Robot("R3", Position(3, 1), Position(3, 6)),
+    ]
+
+    return grid, robots
+
+
 def bfs_demo_scenario() -> tuple[GridMap, list[Robot]]:
     grid = GridMap(
         width=8,
