@@ -34,3 +34,6 @@ class GridMap:
             Position(pos.x, pos.y - 1),
         ]
         return [candidate for candidate in candidates if self.is_free(candidate)]
+
+    def neighbors_with_wait(self, pos: Position) -> list[Position]:
+        return [pos] + self.neighbors(pos)

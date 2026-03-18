@@ -4,8 +4,8 @@ import rclpy
 from rclpy.node import Node
 
 from ..conflict_detection import detect_all_conflicts
-from ..planner import plan_paths_for_robots  # bfs_plan
-from ..scenarios import conflict_demo_scenario  # basic_scenario, bfs_demo_scenario
+from ..prioritized_planner import prioritized_plan_paths
+from ..scenarios import prioritized_demo_scenario
 from ..simulator import Simulator
 
 
@@ -19,36 +19,32 @@ class WorldNode(Node):
         tick_seconds = float(self.get_parameter("tick_seconds").value)
         self.max_steps = int(self.get_parameter("max_steps").value)
 
-        grid, robots = conflict_demo_scenario()
-        plan_paths_for_robots(grid, robots)
+        grid, robots = prioritized_demo_scenario()
+
+        prioritized_plan_paths(grid, robots, goal_hold_steps=20, max_time=50)
+
+        for robot in robots:
+            self.get_logger().info(f"{robot.robot_id} path: {robot.path}")
 
         vertex_conflicts, edge_conflicts = detect_all_conflicts(robots)
 
-        self.get_logger().info("Phase 3 world node started.")
-        self.get_logger().info(f"Planned paths for {len(robots)} robots.")
-
-        if vertex_conflicts:
-            self.get_logger().warn("Vertex conflicts detected:")
+        if vertex_conflicts or edge_conflicts:
+            self.get_logger().error("Conflicts still exist after prioritized planning.")
             for conflict in vertex_conflicts:
-                self.get_logger().warn(
-                    f"t={conflict.time_step}: {conflict.robot_a} and "
-                    f"{conflict.robot_b} at {conflict.position}"
+                self.get_logger().error(
+                    f"Vertex conflict at t={conflict.time_step}: "
+                    f"{conflict.robot_a}, {conflict.robot_b}, {conflict.position}"
                 )
-
-        if edge_conflicts:
-            self.get_logger().warn("Edge conflicts detected:")
             for conflict in edge_conflicts:
-                self.get_logger().warn(
-                    f"t={conflict.time_step}: {conflict.robot_a} "
-                    f"{conflict.from_a}->{conflict.to_a} swaps with "
-                    f"{conflict.robot_b} {conflict.from_b}->{conflict.to_b}"
+                self.get_logger().error(
+                    f"Edge conflict at t={conflict.time_step}: "
+                    f"{conflict.robot_a} and {conflict.robot_b}"
                 )
+            raise RuntimeError("Prioritized planner produced conflicting paths.")
 
-        if not vertex_conflicts and not edge_conflicts:
-            self.get_logger().info("No conflicts detected.")
+        self.get_logger().info("Phase 4 world node started. No conflicts detected.")
 
         self.sim = Simulator(grid, robots)
-
         self.timer = self.create_timer(tick_seconds, self.timer_callback)
 
     def timer_callback(self) -> None:
