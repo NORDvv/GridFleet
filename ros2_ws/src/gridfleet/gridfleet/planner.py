@@ -1,7 +1,7 @@
 from __future__ import annotations
 from collections import deque
 from .grid_map import GridMap
-from .models import Position
+from .models import Position, Robot
 
 
 def reconstruct_path(
@@ -40,3 +40,10 @@ def bfs_plan(grid: GridMap, start: Position, goal: Position) -> list[Position]:
                 came_from[neighbor] = current
 
     return []
+
+
+def plan_paths_for_robots(grid: GridMap, robots: list[Robot]) -> None:
+    for robot in robots:
+        robot.path = bfs_plan(grid, robot.position, robot.goal)
+        if not robot.path:
+            raise RuntimeError(f"No path found for {robot.robot_id}")

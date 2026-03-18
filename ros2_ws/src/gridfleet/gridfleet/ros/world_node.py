@@ -3,8 +3,9 @@ from __future__ import annotations
 import rclpy
 from rclpy.node import Node
 
-from ..planner import bfs_plan
-from ..scenarios import bfs_demo_scenario  # basic_scenario,
+from ..conflict_detection import detect_all_conflicts
+from ..planner import plan_paths_for_robots  # bfs_plan
+from ..scenarios import conflict_demo_scenario  # basic_scenario, bfs_demo_scenario
 from ..simulator import Simulator
 
 
@@ -18,22 +19,35 @@ class WorldNode(Node):
         tick_seconds = float(self.get_parameter("tick_seconds").value)
         self.max_steps = int(self.get_parameter("max_steps").value)
 
-        # grid, robots = basic_scenario()
-        grid, robots = bfs_demo_scenario()
+        grid, robots = conflict_demo_scenario()
+        plan_paths_for_robots(grid, robots)
+
+        vertex_conflicts, edge_conflicts = detect_all_conflicts(robots)
+
+        self.get_logger().info("Phase 3 world node started.")
+        self.get_logger().info(f"Planned paths for {len(robots)} robots.")
+
+        if vertex_conflicts:
+            self.get_logger().warn("Vertex conflicts detected:")
+            for conflict in vertex_conflicts:
+                self.get_logger().warn(
+                    f"t={conflict.time_step}: {conflict.robot_a} and "
+                    f"{conflict.robot_b} at {conflict.position}"
+                )
+
+        if edge_conflicts:
+            self.get_logger().warn("Edge conflicts detected:")
+            for conflict in edge_conflicts:
+                self.get_logger().warn(
+                    f"t={conflict.time_step}: {conflict.robot_a} "
+                    f"{conflict.from_a}->{conflict.to_a} swaps with "
+                    f"{conflict.robot_b} {conflict.from_b}->{conflict.to_b}"
+                )
+
+        if not vertex_conflicts and not edge_conflicts:
+            self.get_logger().info("No conflicts detected.")
+
         self.sim = Simulator(grid, robots)
-
-        robot = self.sim.robots[0]
-        robot.path = bfs_plan(self.sim.grid, robot.position, robot.goal)
-
-        if not robot.path:
-            self.get_logger().error(f"No path found for {robot.robot_id}.")
-            raise RuntimeError("Planner failed to find a path.")
-
-        self.get_logger().info("GridFleet Phase 2 world node started.")
-        self.get_logger().info(f"Planned path for {robot.robot_id}: {robot.path}")
-        self.get_logger().info(
-            f"tick_seconds={tick_seconds}, max_steps={self.max_steps}"
-        )
 
         self.timer = self.create_timer(tick_seconds, self.timer_callback)
 
