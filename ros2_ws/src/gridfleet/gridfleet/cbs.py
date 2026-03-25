@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 from collections import deque
-from dataclasses import dataclass
 
 from .grid_map import GridMap
 from .models import Position, Robot
+from dataclasses import dataclass, field
+from .conflict_detection import (
+    EdgeConflict,
+    VertexConflict,
+    detect_all_conflicts,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -139,3 +144,105 @@ def constrained_bfs_plan(
             frontier.append(next_state)
 
     return []
+
+
+@dataclass(slots=True)
+class CBSTreeNode:
+    vertex_constraints: list[VertexConstraint] = field(default_factory=list)
+    edge_constraints: list[EdgeConstraint] = field(default_factory=list)
+    paths: dict[str, list[Position]] = field(default_factory=dict)
+    cost: int = 0
+
+
+def compute_solution_cost(paths: dict[str, list[Position]]) -> int:
+    return sum(len(path) for path in paths.values())
+
+
+def plan_paths_for_all_robots(
+    grid: GridMap,
+    robots: list[Robot],
+    vertex_constraints: list[VertexConstraint] | None = None,
+    edge_constraints: list[EdgeConstraint] | None = None,
+    max_time: int = 50,
+) -> dict[str, list[Position]]:
+    paths: dict[str, list[Position]] = {}
+
+    for robot in robots:
+        path = constrained_bfs_plan(
+            grid=grid,
+            robot=robot,
+            vertex_constraints=vertex_constraints,
+            edge_constraints=edge_constraints,
+            max_time=max_time,
+        )
+
+        if not path:
+            raise RuntimeError(f"No path found for {robot.robot_id}")
+
+        paths[robot.robot_id] = path
+
+    return paths
+
+
+# TODO think how to refactor this so that there is no need to create Robot objects all the time.
+def build_robots_from_paths(
+    robots: list[Robot],
+    paths: dict[str, list[Position]],
+) -> list[Robot]:
+    robot_lookup = {robot.robot_id: robot for robot in robots}
+    rebuilt_robots: list[Robot] = []
+
+    for robot_id, path in paths.items():
+        original = robot_lookup[robot_id]
+        rebuilt_robots.append(
+            Robot(
+                robot_id=original.robot_id,
+                position=original.position,
+                goal=original.goal,
+                path=path.copy(),
+            )
+        )
+
+    return rebuilt_robots
+
+
+def get_first_conflict(
+    robots: list[Robot],
+) -> VertexConflict | EdgeConflict | None:
+    vertex_conflicts, edge_conflicts = detect_all_conflicts(robots)
+
+    if vertex_conflicts:
+        return vertex_conflicts[0]
+
+    if edge_conflicts:
+        return edge_conflicts[0]
+
+    return None
+
+
+def build_root_cbs_node(
+    grid: GridMap,
+    robots: list[Robot],
+    max_time: int = 50,
+) -> tuple[CBSTreeNode, VertexConflict | EdgeConflict | None]:
+    paths = plan_paths_for_all_robots(
+        grid=grid,
+        robots=robots,
+        vertex_constraints=[],
+        edge_constraints=[],
+        max_time=max_time,
+    )
+
+    cost = compute_solution_cost(paths)
+
+    robots_with_paths = build_robots_from_paths(robots, paths)
+    first_conflict = get_first_conflict(robots_with_paths)
+
+    root = CBSTreeNode(
+        vertex_constraints=[],
+        edge_constraints=[],
+        paths=paths,
+        cost=cost,
+    )
+
+    return root, first_conflict
