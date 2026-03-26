@@ -246,3 +246,202 @@ def build_root_cbs_node(
     )
 
     return root, first_conflict
+
+
+def get_robot_by_id(robots: list[Robot], robot_id: str) -> Robot:
+    for robot in robots:
+        if robot.robot_id == robot_id:
+            return robot
+    raise ValueError(f"Robot with id {robot_id} not found.")
+
+
+def get_vertex_constraints_for_robot(
+    robot_id: str,
+    constraints: list[VertexConstraint],
+) -> list[VertexConstraint]:
+    return [
+        constraint
+        for constraint in constraints
+        if constraint.robot_id == robot_id
+    ]
+
+
+def get_edge_constraints_for_robot(
+    robot_id: str,
+    constraints: list[EdgeConstraint],
+) -> list[EdgeConstraint]:
+    return [
+        constraint
+        for constraint in constraints
+        if constraint.robot_id == robot_id
+    ]
+
+
+def build_child_node_with_replan(
+    parent: CBSTreeNode,
+    grid: GridMap,
+    robots: list[Robot],
+    replanned_robot_id: str,
+    new_vertex_constraint: VertexConstraint | None = None,
+    new_edge_constraint: EdgeConstraint | None = None,
+    max_time: int = 50,
+) -> CBSTreeNode | None:
+    child_vertex_constraints = parent.vertex_constraints.copy()
+    child_edge_constraints = parent.edge_constraints.copy()
+
+    if new_vertex_constraint is not None:
+        child_vertex_constraints.append(new_vertex_constraint)
+
+    if new_edge_constraint is not None:
+        child_edge_constraints.append(new_edge_constraint)
+
+    child_paths = {
+        robot_id: path.copy()
+        for robot_id, path in parent.paths.items()
+    }
+
+    robot = get_robot_by_id(robots, replanned_robot_id)
+
+    robot_vertex_constraints = get_vertex_constraints_for_robot(
+        replanned_robot_id,
+        child_vertex_constraints,
+    )
+    robot_edge_constraints = get_edge_constraints_for_robot(
+        replanned_robot_id,
+        child_edge_constraints,
+    )
+
+    new_path = constrained_bfs_plan(
+        grid=grid,
+        robot=robot,
+        vertex_constraints=robot_vertex_constraints,
+        edge_constraints=robot_edge_constraints,
+        max_time=max_time,
+    )
+
+    if not new_path:
+        return None
+
+    child_paths[replanned_robot_id] = new_path
+
+    return CBSTreeNode(
+        vertex_constraints=child_vertex_constraints,
+        edge_constraints=child_edge_constraints,
+        paths=child_paths,
+        cost=compute_solution_cost(child_paths),
+    )
+
+
+def branch_on_vertex_conflict(
+    parent: CBSTreeNode,
+    conflict: VertexConflict,
+    grid: GridMap,
+    robots: list[Robot],
+    max_time: int = 50,
+) -> list[CBSTreeNode]:
+    child_nodes: list[CBSTreeNode] = []
+
+    constraint_a = VertexConstraint(
+        robot_id=conflict.robot_a,
+        position=conflict.position,
+        time_step=conflict.time_step,
+    )
+    child_a = build_child_node_with_replan(
+        parent=parent,
+        grid=grid,
+        robots=robots,
+        replanned_robot_id=conflict.robot_a,
+        new_vertex_constraint=constraint_a,
+        max_time=max_time,
+    )
+    if child_a is not None:
+        child_nodes.append(child_a)
+
+    constraint_b = VertexConstraint(
+        robot_id=conflict.robot_b,
+        position=conflict.position,
+        time_step=conflict.time_step,
+    )
+    child_b = build_child_node_with_replan(
+        parent=parent,
+        grid=grid,
+        robots=robots,
+        replanned_robot_id=conflict.robot_b,
+        new_vertex_constraint=constraint_b,
+        max_time=max_time,
+    )
+    if child_b is not None:
+        child_nodes.append(child_b)
+
+    return child_nodes
+
+
+def branch_on_edge_conflict(
+    parent: CBSTreeNode,
+    conflict: EdgeConflict,
+    grid: GridMap,
+    robots: list[Robot],
+    max_time: int = 50,
+) -> list[CBSTreeNode]:
+    child_nodes: list[CBSTreeNode] = []
+
+    constraint_a = EdgeConstraint(
+        robot_id=conflict.robot_a,
+        from_pos=conflict.from_a,
+        to_pos=conflict.to_a,
+        time_step=conflict.time_step,
+    )
+    child_a = build_child_node_with_replan(
+        parent=parent,
+        grid=grid,
+        robots=robots,
+        replanned_robot_id=conflict.robot_a,
+        new_edge_constraint=constraint_a,
+        max_time=max_time,
+    )
+    if child_a is not None:
+        child_nodes.append(child_a)
+
+    constraint_b = EdgeConstraint(
+        robot_id=conflict.robot_b,
+        from_pos=conflict.from_b,
+        to_pos=conflict.to_b,
+        time_step=conflict.time_step,
+    )
+    child_b = build_child_node_with_replan(
+        parent=parent,
+        grid=grid,
+        robots=robots,
+        replanned_robot_id=conflict.robot_b,
+        new_edge_constraint=constraint_b,
+        max_time=max_time,
+    )
+    if child_b is not None:
+        child_nodes.append(child_b)
+
+    return child_nodes
+
+
+def branch_on_conflict(
+    parent: CBSTreeNode,
+    conflict: VertexConflict | EdgeConflict,
+    grid: GridMap,
+    robots: list[Robot],
+    max_time: int = 50,
+) -> list[CBSTreeNode]:
+    if isinstance(conflict, VertexConflict):
+        return branch_on_vertex_conflict(
+            parent=parent,
+            conflict=conflict,
+            grid=grid,
+            robots=robots,
+            max_time=max_time,
+        )
+
+    return branch_on_edge_conflict(
+        parent=parent,
+        conflict=conflict,
+        grid=grid,
+        robots=robots,
+        max_time=max_time,
+    )
