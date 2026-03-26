@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from collections import deque
-
+import heapq
+from itertools import count
 from .grid_map import GridMap
 from .models import Position, Robot
 from dataclasses import dataclass, field
@@ -445,3 +446,75 @@ def branch_on_conflict(
         robots=robots,
         max_time=max_time,
     )
+
+
+# TODO do I really need this function? It seems redundand.
+def get_first_conflict_in_node(
+    node: CBSTreeNode,
+    robots: list[Robot],
+) -> VertexConflict | EdgeConflict | None:
+    robots_with_paths = build_robots_from_paths(robots, node.paths)
+    return get_first_conflict(robots_with_paths)
+
+
+def cbs_solve(
+    grid: GridMap,
+    robots: list[Robot],
+    max_time: int = 50,
+    max_high_level_expansions: int = 1000,
+) -> dict[str, list[Position]]:
+    root, first_conflict = build_root_cbs_node(
+        grid=grid,
+        robots=robots,
+        max_time=max_time,
+    )
+
+    if first_conflict is None:
+        return root.paths
+
+    # the tuple is cost, tie breaker, node
+    open_list: list[tuple[int, int, CBSTreeNode]] = []
+    tie_breaker = count()
+
+    heapq.heappush(
+        open_list,
+        (root.cost, next(tie_breaker), root),
+    )
+
+    expansions = 0
+
+    while open_list:
+        _, _, current = heapq.heappop(open_list)
+        expansions += 1
+
+        if expansions > max_high_level_expansions:
+            raise RuntimeError("CBS exceeded max high-level expansions.")
+
+        conflict = get_first_conflict_in_node(current, robots)
+
+        if conflict is None:
+            return current.paths
+
+        children = branch_on_conflict(
+            parent=current,
+            conflict=conflict,
+            grid=grid,
+            robots=robots,
+            max_time=max_time,
+        )
+
+        for child in children:
+            heapq.heappush(
+                open_list,
+                (child.cost, next(tie_breaker), child),
+            )
+
+    raise RuntimeError("CBS failed to find a conflict-free solution.")
+
+
+def assign_paths_to_robots(
+    robots: list[Robot],
+    paths: dict[str, list[Position]],
+) -> None:
+    for robot in robots:
+        robot.path = paths[robot.robot_id].copy()
