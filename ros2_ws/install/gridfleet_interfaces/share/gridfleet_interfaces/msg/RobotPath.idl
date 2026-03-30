@@ -1,0 +1,16 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from gridfleet_interfaces/msg/RobotPath.msg
+// generated code does not contain a copyright notice
+
+
+module gridfleet_interfaces {
+  module msg {
+    struct RobotPath {
+      string robot_id;
+
+      sequence<int32> xs;
+
+      sequence<int32> ys;
+    };
+  };
+};

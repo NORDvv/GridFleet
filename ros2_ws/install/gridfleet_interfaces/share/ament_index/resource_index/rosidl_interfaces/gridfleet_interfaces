@@ -1,0 +1,8 @@
+msg/RobotPath.idl
+msg/RobotPath.msg
+msg/RobotState.idl
+msg/RobotState.msg
+srv/PlanPaths.idl
+srv/PlanPaths.srv
+srv/PlanPaths_Request.msg
+srv/PlanPaths_Response.msg

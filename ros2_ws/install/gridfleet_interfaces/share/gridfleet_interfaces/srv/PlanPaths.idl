@@ -1,0 +1,36 @@
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from gridfleet_interfaces/srv/PlanPaths.srv
+// generated code does not contain a copyright notice
+
+#include "gridfleet_interfaces/msg/RobotPath.idl"
+
+module gridfleet_interfaces {
+  module srv {
+    struct PlanPaths_Request {
+      int32 map_width;
+
+      int32 map_height;
+
+      sequence<int32> obstacle_xs;
+
+      sequence<int32> obstacle_ys;
+
+      sequence<string> robot_ids;
+
+      sequence<int32> start_xs;
+
+      sequence<int32> start_ys;
+
+      sequence<int32> goal_xs;
+
+      sequence<int32> goal_ys;
+    };
+    struct PlanPaths_Response {
+      boolean success;
+
+      string error_message;
+
+      sequence<gridfleet_interfaces::msg::RobotPath> paths;
+    };
+  };
+};

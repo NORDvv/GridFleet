@@ -1,0 +1,14 @@
+int32 map_width
+int32 map_height
+int32[] obstacle_xs
+int32[] obstacle_ys
+
+string[] robot_ids
+int32[] start_xs
+int32[] start_ys
+int32[] goal_xs
+int32[] goal_ys
+---
+bool success
+string error_message
+gridfleet_interfaces/RobotPath[] paths
