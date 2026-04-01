@@ -23,6 +23,7 @@ setup(
     entry_points={
         "console_scripts": [
             "world_node = gridfleet.ros.world_node:main",
+            "planner_node = gridfleet.ros.planner_node:main",
         ],
     },
 )
