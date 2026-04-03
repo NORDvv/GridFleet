@@ -24,6 +24,7 @@ setup(
         "console_scripts": [
             "world_node = gridfleet.ros.world_node:main",
             "planner_node = gridfleet.ros.planner_node:main",
+            "robot_node = gridfleet.ros.robot_node:main",
         ],
     },
 )
