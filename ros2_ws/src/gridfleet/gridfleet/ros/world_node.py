@@ -7,11 +7,11 @@ from std_msgs.msg import Int32
 from gridfleet_interfaces.srv import PlanPaths
 from gridfleet_interfaces.msg import RobotPath, RobotState
 
-from ..conflict_detection import detect_all_conflicts
-from ..models import Position, Robot
+#  from ..conflict_detection import detect_all_conflicts
+from ..models import Position  # , Robot
 from ..scenarios import prioritized_demo_scenario
-from ..simulator import Simulator
-from ..grid_map import GridMap
+#  from ..simulator import Simulator
+#  from ..grid_map import GridMap
 
 
 class WorldNode(Node):

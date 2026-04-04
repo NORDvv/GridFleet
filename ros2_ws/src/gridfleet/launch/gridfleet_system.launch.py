@@ -58,4 +58,4 @@ def generate_launch_description() -> LaunchDescription:
             parameters=[{"robot_id": "R3"}],
         ),
     ])
- #  ros2 launch gridfleet gridfleet_system.launch.py tick_seconds:=0.25 max_steps:=50
+#  ros2 launch gridfleet gridfleet_system.launch.py tick_seconds:=0.25 max_steps:=50
