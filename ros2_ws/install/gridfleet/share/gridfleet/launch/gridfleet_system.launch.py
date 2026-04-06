@@ -57,5 +57,17 @@ def generate_launch_description() -> LaunchDescription:
             output="screen",
             parameters=[{"robot_id": "R3"}],
         ),
+        Node(
+            package="gridfleet",
+            executable="visualizer_node",
+            name="visualizer_node",
+            output="screen",
+            parameters=[
+                {"marker_frame": "map"},
+                {"publish_period": 0.1},
+                {"robot_diameter": 0.35},
+                {"robot_height": 0.20},
+            ],
+        ),
     ])
- #  ros2 launch gridfleet gridfleet_system.launch.py tick_seconds:=0.25 max_steps:=50
+#  ros2 launch gridfleet gridfleet_system.launch.py tick_seconds:=0.25 max_steps:=50
