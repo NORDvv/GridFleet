@@ -67,6 +67,8 @@ def generate_launch_description() -> LaunchDescription:
                 {"publish_period": 0.1},
                 {"robot_diameter": 0.35},
                 {"robot_height": 0.20},
+                {"goal_diameter": 0.18},
+                {"goal_height": 0.08},
             ],
         ),
     ])

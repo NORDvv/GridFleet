@@ -17,7 +17,11 @@ class VisualizerNode(Node):
         self.declare_parameter("publish_period", 0.1)
         self.declare_parameter("robot_diameter", 0.35)
         self.declare_parameter("robot_height", 0.20)
+        self.declare_parameter("goal_diameter", 0.18)
+        self.declare_parameter("goal_height", 0.08)
 
+        self.goal_diameter = float(self.get_parameter("goal_diameter").value)
+        self.goal_height = float(self.get_parameter("goal_height").value)
         self.marker_frame = str(self.get_parameter("marker_frame").value)
         self.publish_period = float(self.get_parameter("publish_period").value)
         self.robot_diameter = float(self.get_parameter("robot_diameter").value)
@@ -50,8 +54,12 @@ class VisualizerNode(Node):
     def publish_markers(self) -> None:
         for index, robot_id in enumerate(sorted(self.latest_states.keys())):
             state = self.latest_states[robot_id]
+            
             marker = self.build_robot_marker(state, index)
             self.marker_publisher.publish(marker)
+
+            goal_marker = self.build_goal_marker(state, index)
+            self.marker_publisher.publish(goal_marker)
 
     def build_robot_marker(self, state: RobotState, marker_id: int) -> Marker:
         marker = Marker()
@@ -87,6 +95,40 @@ class VisualizerNode(Node):
         marker.lifetime.nanosec = 0
 
         return marker
+    
+def build_goal_marker(self, state: RobotState, marker_id: int) -> Marker:
+    marker = Marker()
+    marker.header.frame_id = self.marker_frame
+    marker.header.stamp = self.get_clock().now().to_msg()
+
+    marker.ns = "goals"
+    marker.id = marker_id
+    marker.type = Marker.SPHERE
+    marker.action = Marker.ADD
+
+    marker.pose.position.x = float(state.goal_x)
+    marker.pose.position.y = float(state.goal_y)
+    marker.pose.position.z = self.goal_height / 2.0
+
+    marker.pose.orientation.x = 0.0
+    marker.pose.orientation.y = 0.0
+    marker.pose.orientation.z = 0.0
+    marker.pose.orientation.w = 1.0
+
+    marker.scale.x = self.goal_diameter
+    marker.scale.y = self.goal_diameter
+    marker.scale.z = self.goal_height
+
+    r, g, b = self.color_for_robot(state.robot_id)
+    marker.color.r = r
+    marker.color.g = g
+    marker.color.b = b
+    marker.color.a = 0.65
+
+    marker.lifetime.sec = 0
+    marker.lifetime.nanosec = 0
+
+    return marker
 
     def color_for_robot(self, robot_id: str) -> tuple[float, float, float]:
         color_map = {
