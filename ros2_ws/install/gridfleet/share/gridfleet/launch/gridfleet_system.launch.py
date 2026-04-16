@@ -34,7 +34,7 @@ def generate_launch_description() -> LaunchDescription:
             {"goal_height": 0.08},
             {"path_line_width": 0.05},
             {"path_z": 0.03},
-            {"obstacle_cells": ["3,0","3,1","3,4", "3,3","3,5","3,6","3,7"]},
+            {"obstacle_cells": ["3,0","3,1","5,4", "3,3","3,5","3,6","3,7"]},
             {"obstacle_size": 0.9},
             {"obstacle_height": 0.20},
         ],
@@ -89,6 +89,7 @@ def generate_launch_description() -> LaunchDescription:
                 parameters=[
                     {"tick_seconds": 0.5},
                     {"max_steps": 30},
+                    {"start_paused": True},
                 ],
             ),
         ],

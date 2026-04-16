@@ -67,7 +67,7 @@ def prioritized_demo_scenario() -> tuple[GridMap, list[Robot]]:
         obstacles={
             Position(3, 0),
             Position(3, 1),
-            Position(3, 4),
+            Position(5, 4),
             Position(3, 3),
             Position(3, 5),
             Position(3, 6),
@@ -76,9 +76,9 @@ def prioritized_demo_scenario() -> tuple[GridMap, list[Robot]]:
     )
 
     robots = [
-        Robot("R1", Position(1, 3), Position(6, 3)),
+        Robot("R1", Position(0, 0), Position(7, 7)),
         Robot("R2", Position(6, 3), Position(1, 3)),
-        Robot("R3", Position(2, 1), Position(4, 6)),
+        Robot("R3", Position(7, 0), Position(4, 6)),
     ]
 
     return grid, robots

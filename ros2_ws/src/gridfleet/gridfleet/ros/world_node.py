@@ -3,6 +3,7 @@ from __future__ import annotations
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Int32
+from std_srvs.srv import Trigger
 
 from gridfleet_interfaces.srv import PlanPaths
 from gridfleet_interfaces.msg import RobotPath, RobotState
@@ -20,9 +21,24 @@ class WorldNode(Node):
 
         self.declare_parameter("tick_seconds", 0.5)
         self.declare_parameter("max_steps", 30)
+        self.declare_parameter("start_paused", True)
 
+        self.start_paused = bool(self.get_parameter("start_paused").value)
+        self.is_running = not self.start_paused
+        
         self.tick_seconds = float(self.get_parameter("tick_seconds").value)
         self.max_steps = int(self.get_parameter("max_steps").value)
+
+        self.start_service = self.create_service(
+            Trigger,
+            "start_simulation",
+            self.handle_start_simulation,
+        )
+
+        if self.is_running:
+            self.get_logger().info("World node started in running mode.")
+        else:
+            self.get_logger().info("World node started paused. Call /start_simulation to begin.")
 
         self.grid, self.robots = prioritized_demo_scenario()
         self.robot_lookup = {robot.robot_id: robot for robot in self.robots}
@@ -83,6 +99,25 @@ class WorldNode(Node):
 
         return request
 
+    def handle_start_simulation(
+        self,
+        request: Trigger.Request,
+        response: Trigger.Response,
+    ) -> Trigger.Response:
+        del request
+
+        if self.is_running:
+            response.success = True
+            response.message = "Simulation is already running."
+            return response
+
+        self.is_running = True
+        self.get_logger().info("Simulation start requested. World stepping is now active.")
+
+        response.success = True
+        response.message = "Simulation started."
+        return response
+
     def handle_robot_state(self, msg: RobotState) -> None:
         if msg.robot_id not in self.robot_lookup:
             return
@@ -120,6 +155,9 @@ class WorldNode(Node):
         return "\n".join(" ".join(row) for row in cells)
 
     def timer_callback(self) -> None:
+        if not self.is_running:
+            return
+
         if not self.paths_published:
             self.publish_paths_once()
             return
