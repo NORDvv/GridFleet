@@ -25,7 +25,7 @@ class WorldNode(Node):
 
         self.start_paused = bool(self.get_parameter("start_paused").value)
         self.is_running = not self.start_paused
-        
+
         self.tick_seconds = float(self.get_parameter("tick_seconds").value)
         self.max_steps = int(self.get_parameter("max_steps").value)
 

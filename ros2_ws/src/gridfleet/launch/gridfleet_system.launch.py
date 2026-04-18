@@ -1,16 +1,16 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
+#  from launch.actions import DeclareLaunchArgument
+#  from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 from launch.actions import TimerAction
 
 
 def generate_launch_description() -> LaunchDescription:
-    tick_seconds = LaunchConfiguration("tick_seconds")
-    max_steps = LaunchConfiguration("max_steps")
-    max_time = LaunchConfiguration("max_time")
-    max_high_level_expansions = LaunchConfiguration("max_high_level_expansions")
+    #  tick_seconds = LaunchConfiguration("tick_seconds")
+    #  max_steps = LaunchConfiguration("max_steps")
+    #  max_time = LaunchConfiguration("max_time")
+    #  max_high_level_expansions = LaunchConfiguration("max_high_level_expansions")
 
     rviz_node = Node(
         package="rviz2",
@@ -34,7 +34,7 @@ def generate_launch_description() -> LaunchDescription:
             {"goal_height": 0.08},
             {"path_line_width": 0.05},
             {"path_z": 0.03},
-            {"obstacle_cells": ["3,0","3,1","5,4", "3,3","3,5","3,6","3,7"]},
+            {"obstacle_cells": ["3,0", "3,1", "5,4", "3,3", "3,5", "3,6", "3,7"]},
             {"obstacle_size": 0.9},
             {"obstacle_height": 0.20},
         ],
@@ -66,7 +66,6 @@ def generate_launch_description() -> LaunchDescription:
             ),
         ],
     )
-
 
     delayed_nodes2 = TimerAction(
         period=7.0,
